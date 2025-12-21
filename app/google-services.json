@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "677325971030",
+    "project_id": "bitdue-finance",
+    "storage_bucket": "bitdue-finance.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:677325971030:android:bce9c448794f7798baa5f7",
+        "android_client_info": {
+          "package_name": "com.bitdue.financeapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeqqF-7JI0-wBRLyKPGh2xB0oK5JvBAq0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
