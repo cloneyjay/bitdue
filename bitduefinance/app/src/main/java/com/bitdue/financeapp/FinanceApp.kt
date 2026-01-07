@@ -9,6 +9,9 @@ import com.bitdue.financeapp.data.firebase.FirebaseStorageManager
 import com.bitdue.financeapp.data.firebase.FirestoreSyncManager
 import com.bitdue.financeapp.data.sync.DataSyncManager
 import com.google.firebase.FirebaseApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class FinanceApp : Application() {
     
@@ -55,7 +58,7 @@ class FinanceApp : Application() {
         }
         
         // Ensure default categories exist
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
                 val existingCategories = categoryRepository.getAllCategoriesList()
                 if (existingCategories.isEmpty()) {
