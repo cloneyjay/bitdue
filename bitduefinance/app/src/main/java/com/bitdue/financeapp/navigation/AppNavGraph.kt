@@ -2,16 +2,21 @@ package com.bitdue.financeapp.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.bitdue.financeapp.FinanceApp
 import com.bitdue.financeapp.ui.screens.*
 import com.bitdue.financeapp.ui.screens.auth.LoginScreen
 import com.bitdue.financeapp.ui.screens.auth.SignUpScreen
 import com.bitdue.financeapp.ui.viewmodel.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavGraph(
@@ -36,6 +41,26 @@ fun AppNavGraph(
         startDestination = startDestination,
         modifier = modifier
     ) {
+        // Onboarding Screen
+        composable(Screen.Onboarding.route) {
+            val context = LocalContext.current
+            val scope = rememberCoroutineScope()
+            
+            com.bitdue.financeapp.ui.screens.onboarding.OnboardingScreen(
+                onFinish = {
+                    // Mark onboarding as completed
+                    scope.launch {
+                        val preferencesManager = com.bitdue.financeapp.data.preferences.UserPreferencesManager(context)
+                        preferencesManager.setOnboardingCompleted(true)
+                    }
+                    // Navigate to login
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        
         // Authentication Screens
         composable(Screen.Login.route) {
             LoginScreen(
@@ -125,6 +150,9 @@ fun AppNavGraph(
                 },
                 onNavigateToAddBudget = {
                     navController.navigate(Screen.AddBudget.route)
+                },
+                onNavigateToEditBudget = { budgetId ->
+                    navController.navigate(Screen.EditBudget.createRoute(budgetId))
                 }
             )
         }
@@ -223,6 +251,21 @@ fun AppNavGraph(
             val budgetViewModel: BudgetViewModel = viewModel(factory = BudgetViewModel.Factory)
             AddBudgetScreen(
                 budgetViewModel = budgetViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        
+        composable(
+            route = Screen.EditBudget.route,
+            arguments = listOf(navArgument("budgetId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val budgetId = backStackEntry.arguments?.getString("budgetId") ?: return@composable
+            val budgetViewModel: BudgetViewModel = viewModel(factory = BudgetViewModel.Factory)
+            EditBudgetScreen(
+                budgetViewModel = budgetViewModel,
+                budgetId = budgetId,
                 onNavigateBack = {
                     navController.popBackStack()
                 }

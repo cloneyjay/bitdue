@@ -89,23 +89,77 @@ class BudgetViewModel(
         categoryId: String,
         limit: Double,
         period: String = "monthly",
-        alertThreshold: Float = 0.8f
+        alertThreshold: Float = 0.8f,
+        name: String? = null,
+        customStartDate: Long? = null,
+        customEndDate: Long? = null
     ) {
         viewModelScope.launch {
+            // Check for existing active budget for this category
+            val existingBudget = budgetRepository.getActiveBudgetForCategory(categoryId)
+            if (existingBudget != null) {
+                _uiState.value = _uiState.value.copy(
+                    error = "An active budget already exists for this category"
+                )
+                return@launch
+            }
+            
             val now = LocalDateTime.now()
-            val startDate = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0)
-            val endDate = now.withDayOfMonth(now.toLocalDate().lengthOfMonth()).withHour(23).withMinute(59).withSecond(59)
+            val startDate: Long
+            val endDate: Long
+            
+            if (customStartDate != null && customEndDate != null) {
+                startDate = customStartDate
+                endDate = customEndDate
+            } else {
+                when (period.lowercase()) {
+                    "weekly" -> {
+                        val start = now.with(java.time.DayOfWeek.MONDAY)
+                            .withHour(0).withMinute(0).withSecond(0)
+                        val end = start.plusWeeks(1).minusSeconds(1)
+                        startDate = start.toEpochSecond(ZoneOffset.UTC) * 1000
+                        endDate = end.toEpochSecond(ZoneOffset.UTC) * 1000
+                    }
+                    "quarterly" -> {
+                        val month = now.monthValue
+                        val quarterStart = ((month - 1) / 3) * 3 + 1
+                        val start = now.withMonth(quarterStart).withDayOfMonth(1)
+                            .withHour(0).withMinute(0).withSecond(0)
+                        val end = start.plusMonths(3).minusSeconds(1)
+                        startDate = start.toEpochSecond(ZoneOffset.UTC) * 1000
+                        endDate = end.toEpochSecond(ZoneOffset.UTC) * 1000
+                    }
+                    "yearly" -> {
+                        val start = now.withMonth(1).withDayOfMonth(1)
+                            .withHour(0).withMinute(0).withSecond(0)
+                        val end = start.plusYears(1).minusSeconds(1)
+                        startDate = start.toEpochSecond(ZoneOffset.UTC) * 1000
+                        endDate = end.toEpochSecond(ZoneOffset.UTC) * 1000
+                    }
+                    else -> { // monthly (default)
+                        val start = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0)
+                        val end = now.withDayOfMonth(now.toLocalDate().lengthOfMonth())
+                            .withHour(23).withMinute(59).withSecond(59)
+                        startDate = start.toEpochSecond(ZoneOffset.UTC) * 1000
+                        endDate = end.toEpochSecond(ZoneOffset.UTC) * 1000
+                    }
+                }
+            }
             
             val budget = BudgetEntity(
                 id = UUID.randomUUID().toString(),
                 categoryId = categoryId,
+                name = name,
                 limitAmount = limit,
                 period = period,
-                startDate = startDate.toEpochSecond(ZoneOffset.UTC) * 1000,
-                endDate = endDate.toEpochSecond(ZoneOffset.UTC) * 1000,
+                startDate = startDate,
+                endDate = endDate,
                 alertThreshold = alertThreshold
             )
             budgetRepository.insertBudget(budget)
+            
+            // Clear error on successful add
+            _uiState.value = _uiState.value.copy(error = null)
         }
     }
     

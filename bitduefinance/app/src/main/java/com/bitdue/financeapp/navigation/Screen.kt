@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(val route: String) {
+    object Onboarding : Screen("onboarding")
     object Login : Screen("login")
     object SignUp : Screen("signup")
     object Home : Screen("home")
@@ -26,6 +27,9 @@ sealed class Screen(val route: String) {
         }
     }
     object AddBudget : Screen("add_budget")
+    object EditBudget : Screen("edit_budget/{budgetId}") {
+        fun createRoute(budgetId: String) = "edit_budget/$budgetId"
+    }
     object AddGoal : Screen("add_goal")
     object AddSavingsProgress : Screen("add_savings_progress/{goalId}") {
         fun createRoute(goalId: String) = "add_savings_progress/$goalId"

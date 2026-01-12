@@ -31,10 +31,21 @@ fun AddBudgetScreen(
     val uiState by budgetViewModel.uiState.collectAsState()
     
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
+    var budgetName by remember { mutableStateOf("") }
     var limitAmount by remember { mutableStateOf("") }
     var alertThreshold by remember { mutableStateOf(0.8f) }
+    var selectedPeriod by remember { mutableStateOf("monthly") }
+    var showPeriodDropdown by remember { mutableStateOf(false) }
     
     val selectedCategory = uiState.categories.find { it.id == selectedCategoryId }
+    val periods = listOf("weekly", "monthly", "quarterly", "yearly", "custom")
+    
+    // Show error if duplicate budget
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null) {
+            // Error will be shown via SnackbarHost
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -55,6 +66,20 @@ fun AddBudgetScreen(
                 )
             )
         },
+        snackbarHost = {
+            if (uiState.error != null) {
+                Snackbar(
+                    action = {
+                        TextButton(onClick = { /* Clear error */ }) {
+                            Text("Dismiss")
+                        }
+                    },
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(uiState.error ?: "")
+                }
+            }
+        },
         bottomBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -68,15 +93,19 @@ fun AddBudgetScreen(
                             budgetViewModel.addBudget(
                                 categoryId = selectedCategoryId!!,
                                 limit = amount,
-                                alertThreshold = alertThreshold
+                                period = selectedPeriod,
+                                alertThreshold = alertThreshold,
+                                name = budgetName.ifBlank { null }
                             )
-                            onNavigateBack()
+                            if (uiState.error == null) {
+                                onNavigateBack()
+                            }
                         }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp),
-                    enabled = selectedCategoryId != null && limitAmount.toDoubleOrNull() != null
+                    enabled = selectedCategoryId != null && limitAmount.toDoubleOrNull() != null && limitAmount.toDoubleOrNull()!! > 0
                 ) {
                     Text("Create Budget", modifier = Modifier.padding(8.dp))
                 }
@@ -153,14 +182,68 @@ fun AddBudgetScreen(
                 }
             }
             
+            // Budget Name (Optional)
+            OutlinedTextField(
+                value = budgetName,
+                onValueChange = { budgetName = it },
+                label = { Text("Budget Name (Optional)") },
+                placeholder = { Text("e.g., \"Monthly Groceries\"") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            
+            // Period Selection
+            Text(
+                text = "Budget Period",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            
+            ExposedDropdownMenuBox(
+                expanded = showPeriodDropdown,
+                onExpandedChange = { showPeriodDropdown = it }
+            ) {
+                OutlinedTextField(
+                    value = selectedPeriod.replaceFirstChar { it.uppercase() },
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Period") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showPeriodDropdown) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                )
+                ExposedDropdownMenu(
+                    expanded = showPeriodDropdown,
+                    onDismissRequest = { showPeriodDropdown = false }
+                ) {
+                    periods.forEach { period ->
+                        DropdownMenuItem(
+                            text = { Text(period.replaceFirstChar { it.uppercase() }) },
+                            onClick = {
+                                selectedPeriod = period
+                                showPeriodDropdown = false
+                            }
+                        )
+                    }
+                }
+            }
+            
             // Budget Limit
             OutlinedTextField(
                 value = limitAmount,
                 onValueChange = { limitAmount = it.filter { c -> c.isDigit() || c == '.' } },
-                label = { Text("Monthly Budget Limit") },
+                label = { Text("${selectedPeriod.replaceFirstChar { it.uppercase() }} Budget Limit") },
                 prefix = { Text("Ksh") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                supportingText = {
+                    if (limitAmount.toDoubleOrNull() != null && limitAmount.toDoubleOrNull()!! <= 0) {
+                        Text("Amount must be greater than 0", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                isError = limitAmount.toDoubleOrNull() != null && limitAmount.toDoubleOrNull()!! <= 0
             )
             
             // Alert Threshold
@@ -214,7 +297,7 @@ fun AddBudgetScreen(
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    text = "Monthly limit: Ksh ${limitAmount}",
+                                    text = "${selectedPeriod.replaceFirstChar { it.uppercase() }} limit: Ksh ${limitAmount}",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                                 Text(

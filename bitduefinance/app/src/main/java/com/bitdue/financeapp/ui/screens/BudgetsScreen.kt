@@ -23,9 +23,13 @@ fun BudgetsScreen(
     budgetViewModel: BudgetViewModel,
     onNavigateBack: () -> Unit = {},
     onNavigateToAddBudget: () -> Unit = {},
+    onNavigateToEditBudget: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by budgetViewModel.uiState.collectAsState()
+    
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var budgetToDelete by remember { mutableStateOf<String?>(null) }
     
     val totalLimit = uiState.budgets.sumOf { it.budget.limitAmount }
     val totalSpent = uiState.budgets.sumOf { it.spent }
@@ -144,7 +148,12 @@ fun BudgetsScreen(
                             categoryName = budgetWithSpent.category?.name ?: "Unknown",
                             categoryIcon = budgetWithSpent.category?.icon ?: "📦",
                             spent = budgetWithSpent.spent,
-                            limit = budgetWithSpent.budget.limitAmount
+                            limit = budgetWithSpent.budget.limitAmount,
+                            onClick = { onNavigateToEditBudget(budgetWithSpent.budget.id) },
+                            onDelete = { 
+                                budgetToDelete = budgetWithSpent.budget.id
+                                showDeleteDialog = true
+                            }
                         )
                     }
                 }
@@ -153,6 +162,37 @@ fun BudgetsScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
+        }
+        
+        // Delete confirmation dialog
+        if (showDeleteDialog && budgetToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { 
+                    showDeleteDialog = false
+                    budgetToDelete = null
+                },
+                title = { Text("Delete Budget?") },
+                text = { Text("Are you sure you want to delete this budget? This action cannot be undone.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            budgetToDelete?.let { budgetViewModel.deleteBudget(it) }
+                            showDeleteDialog = false
+                            budgetToDelete = null
+                        }
+                    ) {
+                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { 
+                        showDeleteDialog = false
+                        budgetToDelete = null
+                    }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
