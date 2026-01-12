@@ -14,6 +14,7 @@ sealed class Screen(val route: String) {
     object Goals : Screen("goals")
     object Settings : Screen("settings")
     object Profile : Screen("profile")
+    object Notifications : Screen("notifications")
     object AddTransaction : Screen("add_transaction?type={type}&transactionId={transactionId}") {
         fun createRoute(type: String? = null, transactionId: String? = null): String {
             var route = "add_transaction"

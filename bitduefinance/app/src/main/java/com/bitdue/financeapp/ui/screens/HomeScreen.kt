@@ -24,6 +24,7 @@ import java.time.LocalTime
 fun HomeScreen(
     transactionViewModel: TransactionViewModel,
     goalViewModel: GoalViewModel,
+    notificationViewModel: com.bitdue.financeapp.ui.viewmodel.NotificationViewModel,
     onNavigateToTransactions: () -> Unit = {},
     onNavigateToAddTransaction: () -> Unit = {},
     onNavigateToBudgets: () -> Unit = {},
@@ -31,10 +32,13 @@ fun HomeScreen(
     onNavigateToAddIncome: () -> Unit = {},
     onNavigateToAddExpense: () -> Unit = {},
     onNavigateToEditTransaction: (String) -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by transactionViewModel.uiState.collectAsState()
     val goalUiState by goalViewModel.uiState.collectAsState()
+    val notificationUiState by notificationViewModel.uiState.collectAsState()
     val preferencesManager = remember { UserPreferencesManager(FinanceApp.instance.applicationContext) }
     val userPreferences by preferencesManager.userPreferencesFlow.collectAsState(initial = UserPreferences())
     
@@ -62,30 +66,20 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
+                // Top Bar with Profile Picture, Greeting, Username, Notifications, and Logout
                 item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                
-                // Greeting Header
-                item {
-                    Column {
-                        Text(
-                            text = greeting,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = userName,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
+                    HomeTopBar(
+                        greeting = greeting,
+                        userName = userName,
+                        profilePictureUrl = userPreferences.profilePictureUrl,
+                        unreadNotificationCount = notificationUiState.unreadCount,
+                        onNotificationClick = onNavigateToNotifications,
+                        onLogoutClick = onLogout
+                    )
                 }
                 
                 // Balance Card

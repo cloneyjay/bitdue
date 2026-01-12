@@ -23,6 +23,7 @@ class FinanceApp : Application() {
     val budgetRepository by lazy { BudgetRepository(database.budgetDao()) }
     val goalRepository by lazy { GoalRepository(database.goalDao()) }
     val debtRepository by lazy { DebtRepository(database.debtDao()) }
+    val notificationRepository by lazy { NotificationRepository(database.notificationDao()) }
     
     // Firebase managers
     val authManager by lazy { FirebaseAuthManager() }

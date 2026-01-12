@@ -21,6 +21,7 @@ class UserPreferencesManager(private val context: Context) {
         private val BUDGET_ALERTS_ENABLED = booleanPreferencesKey("budget_alerts_enabled")
         private val CURRENCY_CODE = stringPreferencesKey("currency_code")
         private val USER_NAME = stringPreferencesKey("user_name")
+        private val PROFILE_PICTURE_URL = stringPreferencesKey("profile_picture_url")
         private val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         private val CLOUD_SYNC_ENABLED = booleanPreferencesKey("cloud_sync_enabled")
     }
@@ -42,6 +43,7 @@ class UserPreferencesManager(private val context: Context) {
                 budgetAlertsEnabled = preferences[BUDGET_ALERTS_ENABLED] ?: true,
                 currencyCode = preferences[CURRENCY_CODE] ?: "KES",
                 userName = preferences[USER_NAME] ?: "",
+                profilePictureUrl = preferences[PROFILE_PICTURE_URL] ?: "",
                 onboardingCompleted = preferences[ONBOARDING_COMPLETED] ?: false,
                 cloudSyncEnabled = preferences[CLOUD_SYNC_ENABLED] ?: false
             )
@@ -89,6 +91,12 @@ class UserPreferencesManager(private val context: Context) {
         }
     }
     
+    suspend fun updateProfilePictureUrl(url: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PROFILE_PICTURE_URL] = url
+        }
+    }
+    
     suspend fun setOnboardingCompleted(completed: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[ONBOARDING_COMPLETED] = completed
@@ -110,6 +118,7 @@ data class UserPreferences(
     val budgetAlertsEnabled: Boolean = true,
     val currencyCode: String = "KES",
     val userName: String = "",
+    val profilePictureUrl: String = "",
     val onboardingCompleted: Boolean = false,
     val cloudSyncEnabled: Boolean = false
 )

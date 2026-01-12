@@ -65,9 +65,11 @@ fun AppNavGraph(
         composable(Screen.Home.route) {
             val transactionViewModel: TransactionViewModel = viewModel(factory = TransactionViewModel.Factory)
             val goalViewModel: GoalViewModel = viewModel(factory = GoalViewModel.Factory)
+            val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModel.Factory)
             HomeScreen(
                 transactionViewModel = transactionViewModel,
                 goalViewModel = goalViewModel,
+                notificationViewModel = notificationViewModel,
                 onNavigateToTransactions = {
                     navController.navigate(Screen.Transactions.route)
                 },
@@ -88,6 +90,15 @@ fun AppNavGraph(
                 },
                 onNavigateToEditTransaction = { transactionId ->
                     navController.navigate(Screen.AddTransaction.createRoute(transactionId = transactionId))
+                },
+                onNavigateToNotifications = {
+                    navController.navigate(Screen.Notifications.route)
+                },
+                onLogout = {
+                    FinanceApp.instance.authManager.signOut()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -175,6 +186,16 @@ fun AppNavGraph(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
+                }
+            )
+        }
+        
+        composable(Screen.Notifications.route) {
+            val notificationViewModel: NotificationViewModel = viewModel(factory = NotificationViewModel.Factory)
+            NotificationScreen(
+                viewModel = notificationViewModel,
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }
