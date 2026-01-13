@@ -1,21 +1,29 @@
 package com.bitdue.financeapp.ui.screens
 
 import android.annotation.SuppressLint
+import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.bitdue.financeapp.FinanceApp
 import com.bitdue.financeapp.data.preferences.UserPreferencesManager
 import com.bitdue.financeapp.data.preferences.UserPreferences
+import com.bitdue.financeapp.ui.components.ProfilePictureDialog
+import com.bitdue.financeapp.ui.components.getAvatarEmoji
 import com.bitdue.financeapp.ui.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
@@ -39,6 +47,7 @@ fun ProfileScreen(
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showEditNickname by remember { mutableStateOf(false) }
+    var showProfilePictureDialog by remember { mutableStateOf(false) }
     var nicknameInput by remember { mutableStateOf("") }
     
     Scaffold(
@@ -62,18 +71,56 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Profile Picture Placeholder
-            Surface(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape),
-                color = MaterialTheme.colorScheme.primaryContainer
+            // Profile Picture with Edit Button
+            Box(
+                modifier = Modifier.size(120.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = currentUser?.displayName?.firstOrNull()?.uppercase() ?: "👤",
-                        style = MaterialTheme.typography.displayLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                Surface(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .clickable { showProfilePictureDialog = true },
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        when {
+                            userPreferences.profilePictureUrl.startsWith("avatar_") -> {
+                                Text(
+                                    text = getAvatarEmoji(userPreferences.profilePictureUrl),
+                                    style = MaterialTheme.typography.displayLarge
+                                )
+                            }
+                            userPreferences.profilePictureUrl.isNotBlank() -> {
+                                AsyncImage(
+                                    model = userPreferences.profilePictureUrl,
+                                    contentDescription = "Profile picture",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                            else -> {
+                                Text(
+                                    text = currentUser?.displayName?.firstOrNull()?.uppercase() ?: "👤",
+                                    style = MaterialTheme.typography.displayLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                // Edit Button
+                SmallFloatingActionButton(
+                    onClick = { showProfilePictureDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = (-4).dp, y = (-4).dp),
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit profile picture",
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
@@ -366,6 +413,26 @@ fun ProfileScreen(
             dismissButton = {
                 TextButton(onClick = { showEditNickname = false }) {
                     Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Profile Picture Dialog
+    if (showProfilePictureDialog) {
+        ProfilePictureDialog(
+            currentProfilePicture = userPreferences.profilePictureUrl,
+            onDismiss = { showProfilePictureDialog = false },
+            onAvatarSelected = { avatarId ->
+                scope.launch {
+                    preferencesManager.updateProfilePictureUrl(avatarId)
+                }
+            },
+            onImageSelected = { uri ->
+                scope.launch {
+                    // Save the URI as string - in production, you'd upload to Firebase Storage
+                    // and save the download URL, but for now we'll just save the URI
+                    preferencesManager.updateProfilePictureUrl(uri.toString())
                 }
             }
         )

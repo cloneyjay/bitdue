@@ -19,9 +19,10 @@ import kotlinx.coroutines.launch
         CategoryEntity::class,
         BudgetEntity::class,
         GoalEntity::class,
-        DebtEntity::class
+        DebtEntity::class,
+        NotificationEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -32,6 +33,7 @@ abstract class FinanceDatabase : RoomDatabase() {
     abstract fun budgetDao(): BudgetDao
     abstract fun goalDao(): GoalDao
     abstract fun debtDao(): DebtDao
+    abstract fun notificationDao(): NotificationDao
     
     companion object {
         @Volatile

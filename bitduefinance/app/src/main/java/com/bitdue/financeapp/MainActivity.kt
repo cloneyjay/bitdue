@@ -116,9 +116,25 @@ fun MainScreen() {
     )
     val authUiState by authViewModel.uiState.collectAsState()
     
+    // Get onboarding status
+    val preferencesManager = remember { 
+        com.bitdue.financeapp.data.preferences.UserPreferencesManager(FinanceApp.instance.applicationContext) 
+    }
+    val userPreferences by preferencesManager.userPreferencesFlow.collectAsState(
+        initial = com.bitdue.financeapp.data.preferences.UserPreferences()
+    )
+    
+    // Determine start destination based on onboarding and auth status
+    val startDestination = when {
+        !userPreferences.onboardingCompleted -> Screen.Onboarding.route
+        FinanceApp.instance.authManager.isLoggedIn -> Screen.Home.route
+        else -> Screen.Login.route
+    }
+    
     // Determine if bottom bar should be shown
-    // Hide bottom bar on auth screens
+    // Hide bottom bar on auth screens and onboarding
     val hideBottomBarRoutes = listOf(
+        Screen.Onboarding.route,
         Screen.Login.route,
         Screen.SignUp.route
     )
@@ -193,7 +209,7 @@ fun MainScreen() {
             navController = navController,
             modifier = Modifier.padding(paddingValues),
             isUserAuthenticated = authUiState.isAuthenticated,
-            startDestination = if (FinanceApp.instance.authManager.isLoggedIn) Screen.Home.route else Screen.Login.route
+            startDestination = startDestination
         )
     }
 }

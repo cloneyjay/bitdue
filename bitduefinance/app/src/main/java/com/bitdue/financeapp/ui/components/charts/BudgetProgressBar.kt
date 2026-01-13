@@ -1,8 +1,12 @@
 package com.bitdue.financeapp.ui.components.charts
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -17,7 +21,9 @@ fun BudgetProgressBar(
     categoryIcon: String,
     spent: Double,
     limit: Double,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+    onDelete: () -> Unit = {}
 ) {
     val percentage = if (limit > 0) (spent / limit).coerceIn(0.0, 1.0) else 0.0
     val remaining = (limit - spent).coerceAtLeast(0.0)
@@ -29,7 +35,9 @@ fun BudgetProgressBar(
     }
     
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -41,9 +49,13 @@ fun BudgetProgressBar(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = categoryIcon,
                         style = MaterialTheme.typography.titleMedium
@@ -55,12 +67,28 @@ fun BudgetProgressBar(
                         fontWeight = FontWeight.SemiBold
                     )
                 }
-                Text(
-                    text = "${String.format("%.0f", percentage * 100)}%",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = progressColor
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "${String.format("%.0f", percentage * 100)}%",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = progressColor
+                    )
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete budget",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
